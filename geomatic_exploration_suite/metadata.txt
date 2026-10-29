@@ -3,7 +3,7 @@ name=Geomatic Exploration Suite
 qgisMinimumVersion=3.22
 description=Radiometric analysis, seismic CDP annotation and SEG-Y navigation tools.
 about=Combines the supplied radiometric workflow and seismic CDP/SEG-Y tools in one QGIS plugin with a shared dock, menu and user guide. Radiometric tools support input QC, conditioning, U/Th, U/K, K/U and K/Th ratios, threshold review, RRAI-U/HRAI-KU/HRI combination and anomaly extraction. Seismic tools create interval annotation points and convert SEG-Y navigation headers to point/line layers and CSV/ASCII outputs. Requires QGIS Python, NumPy and GDAL. SEG-Y conversion additionally requires segyio in the QGIS Python environment. Outputs require suitable input CRS, units and dataset checks; diagnostic indices are not direct proof of hydrocarbons.
-version=1.0.0
+version=1.0.1
 author=Donald Annor Appiah
 email=Donaldannorgames@gmail.com
 repository=https://github.com/Donnai/geomatic-exploration-suite
@@ -16,4 +16,5 @@ icon=seismic/icon.png
 experimental=False
 deprecated=False
 hasProcessingProvider=True
-changelog=1.0.0 Integrates radiometric analysis and seismic CDP/SEG-Y tools in one plugin with a shared dock, Donald Annor Appiah author metadata, a public user guide and clean ZIP packaging. Includes a distinct Processing provider to avoid collisions with the original radiometric plugin.
+changelog=1.0.1 Adds diagnostic logging to previously silent optional-operation fallbacks. Scientific settings and processing formulas are unchanged.
+ 1.0.0 Integrates radiometric analysis and seismic CDP/SEG-Y tools in one plugin with a shared dock, Donald Annor Appiah author metadata, a public user guide and clean ZIP packaging. Includes a distinct Processing provider to avoid collisions with the original radiometric plugin.

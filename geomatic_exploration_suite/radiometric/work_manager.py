@@ -7,6 +7,7 @@ The manager keeps repeated QC runs isolated under:
 It intentionally does not move the user's original input data. It only redirects
 outputs and auto-detection to the active session folder when a session is active.
 """
+import logging
 import os
 import json
 import shutil
@@ -224,7 +225,7 @@ class WorkManagerTab(QWidget):
             try:
                 self.parent_plugin._sync_folder_state()
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in WorkManagerTab.switch_session; existing fallback retained.", exc_info=True)
         self.populate_session_table(safe)
 
     def rename_session(self):
@@ -363,5 +364,5 @@ class WorkManagerTab(QWidget):
                     try:
                         os.remove(os.path.join(root, f)); count += 1
                     except Exception:
-                        pass
+                        logging.getLogger(__name__).debug("Optional operation failed in WorkManagerTab.clean_temp_files; existing fallback retained.", exc_info=True)
         QMessageBox.information(self, 'Cleanup complete', f'Removed {count} temporary/support files.')

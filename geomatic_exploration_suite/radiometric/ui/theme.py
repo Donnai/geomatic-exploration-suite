@@ -7,6 +7,7 @@ v3.55.4 UI refinement:
 - panels are only very slightly transparent; outer edges remain softer
 - buttons use a Qt-like raised/bezel treatment
 """
+import logging
 
 from qgis.PyQt.QtGui import QFont
 
@@ -533,11 +534,11 @@ def apply_radiometric_theme(widget, theme=LIGHT):
     try:
         widget.setFont(app_font)
     except Exception:
-        pass
+        logging.getLogger(__name__).debug("Optional operation failed in apply_radiometric_theme; existing fallback retained.", exc_info=True)
     try:
         widget.setStyleSheet(stylesheet(theme))
     except Exception:
-        pass
+        logging.getLogger(__name__).debug("Optional operation failed in apply_radiometric_theme; existing fallback retained.", exc_info=True)
 
     parent = widget.parentWidget()
     while parent is not None:
@@ -549,5 +550,5 @@ def apply_radiometric_theme(widget, theme=LIGHT):
                 parent.setWindowOpacity(0.995)
                 break
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in apply_radiometric_theme; existing fallback retained.", exc_info=True)
         parent = parent.parentWidget()

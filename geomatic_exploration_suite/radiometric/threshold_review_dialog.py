@@ -6,6 +6,7 @@ Processing algorithm because the workflow is interpretive: inspect histograms,
 preview spatial threshold masks, tune continuity/trending, then extract final
 polygons.
 """
+import logging
 import os, csv, math
 import numpy as np
 import processing
@@ -776,7 +777,7 @@ class ThresholdReviewDialog(QDialog):
             if math.isfinite(xmin) and math.isfinite(xmax) and xmax > xmin:
                 return xmin, xmax
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in ThresholdReviewDialog._manual_axis_range; existing fallback retained.", exc_info=True)
         return None
 
     def _hist_bins_for(self, key, n_bins=80):
@@ -990,14 +991,14 @@ class ThresholdReviewDialog(QDialog):
             try:
                 layer.setOpacity(float(opacity))
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in ThresholdReviewDialog._style_preview_mask_layer; existing fallback retained.", exc_info=True)
             layer.setCustomProperty('radiometric_stage3_preview_mask', True)
             layer.triggerRepaint()
         except Exception:
             try:
                 layer.setOpacity(float(opacity))
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in ThresholdReviewDialog._style_preview_mask_layer; existing fallback retained.", exc_info=True)
 
     def _clear_threshold_previews(self):
         project = QgsProject.instance()
@@ -1188,7 +1189,7 @@ class ThresholdReviewDialog(QDialog):
             try:
                 self.trend_summary.appendPlainText('Polygon smoothing failed; using unsmoothed output. ' + str(e))
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in ThresholdReviewDialog._smooth_polygon_output; existing fallback retained.", exc_info=True)
             return gpkg_path
 
     def _extract_polygons(self):

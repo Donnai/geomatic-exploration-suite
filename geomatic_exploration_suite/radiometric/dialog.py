@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tabbed dock UI for the Radiometric Analysis plugin."""
+import logging
 import os
 import csv
 import json
@@ -116,7 +117,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self.setAttribute(Qt.WA_TranslucentBackground, True)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel.__init__; existing fallback retained.", exc_info=True)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(6, 6, 6, 6)
@@ -164,7 +165,7 @@ class RadiometricAnalysisPanel(QWidget):
             if os.path.exists(path):
                 return QIcon(path)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._icon; existing fallback retained.", exc_info=True)
         try:
             return self.style().standardIcon(QStyle.SP_FileIcon)
         except Exception:
@@ -178,7 +179,7 @@ class RadiometricAnalysisPanel(QWidget):
                 self.tabs.setTabIcon(idx, self._icon(name))
             self.tabs.setIconSize(self.tabs.iconSize())
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._set_tab_icons; existing fallback retained.", exc_info=True)
 
     # ------------------------------------------------------------------ common UI
     def _scroll_wrap(self, widget):
@@ -245,7 +246,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self._load_project_layers_from_processing_folder()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._refresh_project_folder; existing fallback retained.", exc_info=True)
         QMessageBox.information(self, 'Project refreshed', 'The plugin inputs and QGIS layer tree were refreshed from the processing folder.')
 
     def _run_synthetic_validation(self):
@@ -282,24 +283,24 @@ class RadiometricAnalysisPanel(QWidget):
             if hasattr(self, 'work_manager_tab'):
                 self.work_manager_tab.refresh_from_state()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._processing_folder_changed; existing fallback retained.", exc_info=True)
         self._sync_folder_state()
 
     def _sync_folder_state(self):
         try:
             self._auto_load_input_rasters_from_folder(set_combos=True, silent=True)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._sync_folder_state; existing fallback retained.", exc_info=True)
         try:
             self._auto_load_filtered_rasters_from_folder(set_combos=True, silent=True)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._sync_folder_state; existing fallback retained.", exc_info=True)
         self._detect_filtered_inputs(update_labels=True)
         self._detect_ratio_outputs(update_state=True)
         try:
             self._update_qc_data_inputs()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._sync_folder_state; existing fallback retained.", exc_info=True)
         active_folder = self._active_processing_folder()
         for widget in (self.stage3_widget, self.stage4_widget, getattr(self, 'crossplot_widget', None)):
             if widget is not None:
@@ -309,7 +310,7 @@ class RadiometricAnalysisPanel(QWidget):
                 try:
                     widget._auto_from_processing_folder()
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._sync_folder_state; existing fallback retained.", exc_info=True)
 
     def _auto_load_data_from_processing_folder_main(self):
         """Refresh all tab inputs from the current processing folder.
@@ -333,7 +334,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self._update_qc_data_inputs()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._auto_load_data_from_processing_folder_main; existing fallback retained.", exc_info=True)
         active_folder = self._active_processing_folder()
         for widget in (self.stage3_widget, self.stage4_widget, getattr(self, 'crossplot_widget', None)):
             if widget is not None:
@@ -341,7 +342,7 @@ class RadiometricAnalysisPanel(QWidget):
                 try:
                     widget._auto_from_processing_folder()
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._auto_load_data_from_processing_folder_main; existing fallback retained.", exc_info=True)
         msg = [
             'Auto-load from processing folder complete.',
             '',
@@ -418,7 +419,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             btn.setIcon(self._icon('guide'))
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._guide_button; existing fallback retained.", exc_info=True)
         btn.clicked.connect(lambda: self._show_text_window(title, text))
         return btn
 
@@ -440,7 +441,7 @@ class RadiometricAnalysisPanel(QWidget):
                     if lyr.geometryType() == QgsWkbTypes.PolygonGeometry:
                         combo.addItem(lyr.name(), lyr.source())
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._project_polygon_combo; existing fallback retained.", exc_info=True)
         return combo
 
     def _refresh_raster_combos(self):
@@ -630,7 +631,7 @@ class RadiometricAnalysisPanel(QWidget):
                 if hasattr(child, 'layer') and child.layer() and child.layer().id() == layer.id():
                     return layer
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._add_layer_to_group; existing fallback retained.", exc_info=True)
         target.addLayer(layer)
         return layer
 
@@ -744,7 +745,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self.theme_toggle_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogYesButton))
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._add_theme_controls; existing fallback retained.", exc_info=True)
         self.theme_toggle_btn.toggled.connect(self._toggle_theme)
         layout.addWidget(self.theme_toggle_btn)
 
@@ -757,7 +758,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             apply_radiometric_theme(self, self.current_theme)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._apply_theme; existing fallback retained.", exc_info=True)
         try:
             if self.current_theme == DARK:
                 self.theme_toggle_btn.setText('Dark')
@@ -766,7 +767,7 @@ class RadiometricAnalysisPanel(QWidget):
                 self.theme_toggle_btn.setText('Light')
                 self.theme_toggle_btn.setToolTip('Light theme active. Click to switch to dark mode.')
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._apply_theme; existing fallback retained.", exc_info=True)
 
     def _add_window_control_buttons(self, layout):
         """Add dock/window controls to the persistent top bar."""
@@ -781,7 +782,7 @@ class RadiometricAnalysisPanel(QWidget):
             try:
                 btn.setIcon(style.standardIcon(icon))
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._add_window_control_buttons.make_btn; existing fallback retained.", exc_info=True)
             btn.clicked.connect(callback)
             return btn
 
@@ -1066,7 +1067,7 @@ class RadiometricAnalysisPanel(QWidget):
             elif hasattr(obj, 'setText'):
                 obj.setText(str(value))
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._apply_widget_value; existing fallback retained.", exc_info=True)
 
     def _collect_named_widget_settings(self, target, names):
         data = {}
@@ -1200,13 +1201,13 @@ class RadiometricAnalysisPanel(QWidget):
                 for cb, val in zip(getattr(self, 'qc_path_checks', []), dq.get('qc_include_flags', [])):
                     cb.setChecked(bool(val))
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._load_workflow_settings; existing fallback retained.", exc_info=True)
             try:
                 # Apply histogram raster by visible text after the folder refreshes.
                 self._refresh_histogram_raster_combo()
                 self._apply_widget_value(getattr(self, 'hist_raster_combo', None), dq.get('hist_raster'))
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._load_workflow_settings; existing fallback retained.", exc_info=True)
 
             self._apply_named_widget_settings(self, data.get('stage1_preprocessing', {}))
             self._apply_named_widget_settings(self, data.get('stage1_ratio_generation', {}))
@@ -1219,7 +1220,7 @@ class RadiometricAnalysisPanel(QWidget):
             try:
                 self._sync_folder_state()
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._load_workflow_settings; existing fallback retained.", exc_info=True)
             QMessageBox.information(self, 'Settings loaded', 'Settings loaded from:\n\n' + path)
         except Exception as e:
             QMessageBox.critical(self, 'Load settings failed', str(e))
@@ -1230,7 +1231,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self.tabs.setCurrentIndex(tab_index)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._autorun_error; existing fallback retained.", exc_info=True)
         QMessageBox.warning(self, title, message)
 
     def _set_progress(self, bar_name, value, text=None):
@@ -1242,7 +1243,7 @@ class RadiometricAnalysisPanel(QWidget):
                     bar.setFormat(str(text))
                 QApplication.processEvents()
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._set_progress; existing fallback retained.", exc_info=True)
 
     def _validate_auto_workflow(self, mode_text):
         """Validate required settings before starting an automated workflow."""
@@ -1253,7 +1254,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self._auto_load_input_rasters_from_folder(set_combos=True, silent=True)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._validate_auto_workflow; existing fallback retained.", exc_info=True)
         u = self._selected_raster_source(getattr(self, 'u_combo', None), getattr(self, 'u_file', None))
         k = self._selected_raster_source(getattr(self, 'k_combo', None), getattr(self, 'k_file', None))
         th = self._selected_raster_source(getattr(self, 'th_combo', None), getattr(self, 'th_file', None))
@@ -1419,7 +1420,7 @@ class RadiometricAnalysisPanel(QWidget):
                         exists = True
                         break
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._load_project_layers_from_processing_folder; existing fallback retained.", exc_info=True)
             if exists:
                 skipped += 1
                 continue
@@ -1598,7 +1599,7 @@ class RadiometricAnalysisPanel(QWidget):
             analysis_tabs.setTabIcon(1, self._icon('histogram'))
             analysis_tabs.setTabIcon(2, self._icon('crossplot'))
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._make_data_qc_tab; existing fallback retained.", exc_info=True)
 
         self._update_qc_data_inputs()
         self._refresh_histogram_raster_combo()
@@ -1768,7 +1769,7 @@ class RadiometricAnalysisPanel(QWidget):
             if mode.startswith('fast'):
                 self.hist_sample_max.setValue(500000)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._update_histogram_sampling_controls; existing fallback retained.", exc_info=True)
 
     def _histogram_sample_limit(self):
         try:
@@ -2371,7 +2372,7 @@ class RadiometricAnalysisPanel(QWidget):
                 if isinstance(w, QGridLayout):
                     self._normalise_grid_label_colons(w)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._normalise_grid_label_colons; existing fallback retained.", exc_info=True)
 
     def _make_stage2_analysis_tab(self):
         w = QWidget(); root = QVBoxLayout(w)
@@ -2389,7 +2390,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self._apply_icons_to_child_tabs(self.stage3_widget, {'Threshold': 'threshold', 'Anomaly': 'polygon', 'Extract': 'polygon', 'Review': 'qc', 'Table': 'table'})
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._make_stage2_analysis_tab; existing fallback retained.", exc_info=True)
         return w
 
     def _make_stage3_combined_tab(self):
@@ -2408,7 +2409,7 @@ class RadiometricAnalysisPanel(QWidget):
         try:
             self._apply_icons_to_child_tabs(self.stage4_widget, {'Normal': 'normalise', 'Cross': 'crossplot', 'Combination': 'combine', 'Combined': 'combine', 'Threshold': 'threshold', 'Anomaly': 'polygon', 'Extract': 'polygon'})
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._make_stage3_combined_tab; existing fallback retained.", exc_info=True)
         return w
 
     # ------------------------------------------------------------------ embedded stage 1A

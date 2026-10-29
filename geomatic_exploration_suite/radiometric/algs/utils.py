@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import os, csv, math
 from datetime import datetime
 import numpy as np
@@ -33,7 +34,7 @@ def write_raster(path, arr, profile, gdal_type=gdal.GDT_Float32, nodata=-9999):
         out = out.astype(np.float32); out[~np.isfinite(out)] = nodata
     b.WriteArray(out); b.FlushCache()
     try: b.ComputeStatistics(False)
-    except Exception: pass
+    except Exception: logging.getLogger(__name__).debug("Optional operation failed in write_raster; existing fallback retained.", exc_info=True)
     ds = None
 
 def warp_to_reference(input_path, output_path, ref_path, mask_path=None):
@@ -191,13 +192,13 @@ def safe_divide_chunked(a_path, b_path, out_path, min_denominator=0.0, block_siz
                 try:
                     feedback.pushInfo(f'Chunked divide progress: {done_blocks}/{total_blocks} blocks')
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional operation failed in safe_divide_chunked; existing fallback retained.", exc_info=True)
 
     out_band.FlushCache()
     try:
         out_band.ComputeStatistics(False)
     except Exception:
-        pass
+        logging.getLogger(__name__).debug("Optional operation failed in safe_divide_chunked; existing fallback retained.", exc_info=True)
     out_ds = None
     ds_a = None
     ds_b = None
@@ -206,7 +207,7 @@ def safe_divide_chunked(a_path, b_path, out_path, min_denominator=0.0, block_siz
         try:
             feedback.pushInfo(f'Chunked divide complete: valid output cells={valid_out:,}; denominator-guarded cells={masked_den:,}')
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in safe_divide_chunked; existing fallback retained.", exc_info=True)
     return out_path
 
 def normalise(arr):
@@ -405,7 +406,7 @@ def write_stats_csv(path, stats, settings=None):
 def polygonize_class_raster(raster_path, output_gpkg, layer_name, keep_values, min_area_km2=0.0):
     if os.path.exists(output_gpkg):
         try: os.remove(output_gpkg)
-        except Exception: pass
+        except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_class_raster; existing fallback retained.", exc_info=True)
     src = gdal.Open(raster_path)
     if src is None: raise QgsProcessingException(f'Could not open class raster: {raster_path}')
     band = src.GetRasterBand(1); proj = src.GetProjection(); dst = ogr.GetDriverByName('GPKG').CreateDataSource(output_gpkg)
@@ -425,7 +426,7 @@ def polygonize_class_raster(raster_path, output_gpkg, layer_name, keep_values, m
         feat.SetField('class_name', cname); feat.SetField('area_km2', float(area)); feat.SetField('anomaly_id', nid); lyr.SetFeature(feat); nid += 1
     for fid in delete: lyr.DeleteFeature(fid)
     try: dst.ExecuteSQL(f'CREATE SPATIAL INDEX ON {layer_name} (geom)')
-    except Exception: pass
+    except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_class_raster; existing fallback retained.", exc_info=True)
     dst = None; src = None
 
 
@@ -440,7 +441,7 @@ def polygonize_binary_mask_raster(raster_path, output_gpkg, layer_name, min_area
     """
     if os.path.exists(output_gpkg):
         try: os.remove(output_gpkg)
-        except Exception: pass
+        except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_binary_mask_raster; existing fallback retained.", exc_info=True)
     src = gdal.Open(raster_path)
     if src is None:
         raise QgsProcessingException(f'Could not open binary mask raster: {raster_path}')
@@ -494,7 +495,7 @@ def polygonize_binary_mask_raster(raster_path, output_gpkg, layer_name, min_area
     for fid in delete:
         lyr.DeleteFeature(fid)
     try: dst.ExecuteSQL(f'CREATE SPATIAL INDEX ON {layer_name} (geom)')
-    except Exception: pass
+    except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_binary_mask_raster; existing fallback retained.", exc_info=True)
     dst = None; src = None; work = None
 
 def load_layer(path, name):
@@ -562,11 +563,11 @@ def apply_blue_red_pseudocolor(layer, low_q=1.0, high_q=99.0):
             ramp.setMinimumValue(float(lo))
             ramp.setMaximumValue(float(hi))
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in apply_blue_red_pseudocolor; existing fallback retained.", exc_info=True)
         try:
             ramp.setClip(True)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in apply_blue_red_pseudocolor; existing fallback retained.", exc_info=True)
         ramp.setColorRampItemList([
             QgsColorRampShader.ColorRampItem(float(lo), QColor(0, 0, 255), f'P{low_q:g}'),
             QgsColorRampShader.ColorRampItem(float(mid), QColor(255, 255, 255), 'Median'),
@@ -580,13 +581,13 @@ def apply_blue_red_pseudocolor(layer, low_q=1.0, high_q=99.0):
         try:
             layer.reload()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in apply_blue_red_pseudocolor; existing fallback retained.", exc_info=True)
         return True
     except Exception as e:
         try:
             print('RadiometricAnalysisPlugin styling failed:', e)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in apply_blue_red_pseudocolor; existing fallback retained.", exc_info=True)
         return False
 
 def load_raster_pseudocolor_quantile(path, name, low_q=1.0, high_q=99.0):
@@ -664,7 +665,7 @@ def add_layer_to_radiometric_group(layer, path):
                 if hasattr(child, 'layer') and child.layer() and child.layer().id() == layer.id():
                     return True
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in add_layer_to_radiometric_group; existing fallback retained.", exc_info=True)
         target.addLayer(layer)
         return True
     except Exception:
@@ -684,7 +685,7 @@ def polygonize_binary_mask_raster(raster_path, output_gpkg, layer_name, min_area
     """
     if os.path.exists(output_gpkg):
         try: os.remove(output_gpkg)
-        except Exception: pass
+        except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_binary_mask_raster; existing fallback retained.", exc_info=True)
     src = gdal.Open(raster_path)
     if src is None:
         raise QgsProcessingException(f'Could not open binary mask raster: {raster_path}')
@@ -738,7 +739,7 @@ def polygonize_binary_mask_raster(raster_path, output_gpkg, layer_name, min_area
     for fid in delete:
         lyr.DeleteFeature(fid)
     try: dst.ExecuteSQL(f'CREATE SPATIAL INDEX ON {layer_name} (geom)')
-    except Exception: pass
+    except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_binary_mask_raster; existing fallback retained.", exc_info=True)
     dst = None; src = None; work = None
 
 def load_layer(path, name):

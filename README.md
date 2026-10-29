@@ -46,3 +46,8 @@ input datasets or private test logs are included in this public repository.
 
 GPL-3.0-or-later. See [LICENSE](LICENSE) and the retained component credits in
 [AUTHORS.md](geomatic_exploration_suite/AUTHORS.md).
+
+## Version 1.0.1
+
+Optional-operation fallback failures are now logged for diagnosis. Scientific
+settings and numerical formulas remain unchanged.

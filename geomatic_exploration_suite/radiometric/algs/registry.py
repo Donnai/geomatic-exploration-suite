@@ -9,6 +9,7 @@ The plugin buttons use these stable step identifiers instead of depending on
 Python filenames or display names. This lets you replace/rename script files as
 long as the algorithm class keeps the same WORKFLOW_STEP_ID.
 """
+import logging
 import importlib
 import inspect
 import os
@@ -71,7 +72,7 @@ def instantiate_algorithms():
             items.append((idx, alg.name(), alg))
         except Exception:
             # Do not let one broken experimental script block the whole provider.
-            continue
+            logging.getLogger(__name__).debug("Optional operation failed in instantiate_algorithms; existing fallback retained.", exc_info=True); continue
     return [alg for _, _, alg in sorted(items, key=lambda x: (x[0], x[1]))]
 
 
@@ -88,7 +89,7 @@ def resolve_algorithm_id_by_step(step_id):
             if alg.id().startswith(prefix) and getattr(alg, 'WORKFLOW_STEP_ID', None) == step_id:
                 return alg.id()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in resolve_algorithm_id_by_step; existing fallback retained.", exc_info=True)
 
     # Fallback: old fixed names.
     for name in STEP_NAME_CANDIDATES.get(step_id, []):

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
     QgsProcessingAlgorithm, QgsProcessingParameterRasterLayer,
@@ -50,7 +51,7 @@ class RatioMapAnomalyExtraction(QgsProcessingAlgorithm):
                     k = (row.get('PARAMETER') or '').strip()
                     if k in required:
                         try: out[k] = float(row.get('VALUE'))
-                        except Exception: pass
+                        except Exception: logging.getLogger(__name__).debug("Optional operation failed in RatioMapAnomalyExtraction._read_reviewed_thresholds; existing fallback retained.", exc_info=True)
         missing = [k for k in required if k not in out]
         if missing:
             raise QgsProcessingException('Reviewed threshold CSV is missing required fields: ' + ', '.join(missing))

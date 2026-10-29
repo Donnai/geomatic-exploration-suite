@@ -12,6 +12,7 @@ Updates:
 - Output filenames use input raster basename + suffix, e.g. MyU_MeanF_5x5.tif
 - Optional mask polygon keeps the reference raster extent and writes NoData outside the polygon
 """
+import logging
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
@@ -263,7 +264,7 @@ def _write_raster(path, arr, profile, gdal_type=gdal.GDT_Float32, nodata=-9999):
     try:
         band.ComputeStatistics(False)
     except Exception:
-        pass
+        logging.getLogger(__name__).debug("Optional operation failed in _write_raster; existing fallback retained.", exc_info=True)
     ds = None
 
 

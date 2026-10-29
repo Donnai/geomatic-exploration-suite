@@ -1,6 +1,6 @@
 # Geomatic Exploration Suite — User Guide
 
-Version 1.0.0 · Author and maintainer: **Donald Annor Appiah**
+Version 1.0.1 · Author and maintainer: **Donald Annor Appiah**
 
 This plugin combines the supplied Radiometric Analysis Suite and Seismic CDP
 Interval Annotator into one installable package, shared menu and dock. The

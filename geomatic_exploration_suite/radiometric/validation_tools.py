@@ -6,6 +6,7 @@ independently computed expected outputs.  It is intended as a small, transparent
 parallel trial for checking that the plugin processing logic is doing what the
 user expects.
 """
+import logging
 import os
 import csv
 import math
@@ -120,7 +121,7 @@ def _parse_triplet(value, default):
         try:
             return (float(nums[0]), float(nums[1]), float(nums[2]))
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in _parse_triplet; existing fallback retained.", exc_info=True)
     return tuple(default)
 
 
@@ -140,7 +141,7 @@ def _latest_file_by_tokens(root, required_tokens, extensions=('.csv', '.json'), 
                 try:
                     matches.append((os.path.getmtime(path), path))
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug("Optional operation failed in _latest_file_by_tokens; existing fallback retained.", exc_info=True)
     if not matches:
         return ''
     return sorted(matches, reverse=True)[0][1]

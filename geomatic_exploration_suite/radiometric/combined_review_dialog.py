@@ -4,6 +4,7 @@
 This mirrors the Stage 2 ratio-map analysis structure, but operates on a single
 combined radiometric index after generating normalised ratio maps.
 """
+import logging
 import os, csv, math, glob
 from datetime import datetime
 import numpy as np
@@ -102,7 +103,7 @@ class CombinedAnalysisDialog(QDialog):
         try:
             self.run_id_edit.setText(safe)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._safe_run_id; existing fallback retained.", exc_info=True)
         return safe
 
     def _build_ui(self):
@@ -341,7 +342,7 @@ class CombinedAnalysisDialog(QDialog):
         self.pca_summary = QPlainTextEdit(); self.pca_summary.setReadOnly(True); self.pca_summary.setMaximumHeight(120)
         root.addWidget(self.pca_summary)
         try: self._pca_refresh_input_preview()
-        except Exception: pass
+        except Exception: logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._make_pca_tab; existing fallback retained.", exc_info=True)
         return w
 
 
@@ -366,9 +367,9 @@ class CombinedAnalysisDialog(QDialog):
                     try:
                         existing.append(int(name.split('_')[1].replace('v','')))
                     except Exception:
-                        pass
+                        logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._next_pca_version_tag; existing fallback retained.", exc_info=True)
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._next_pca_version_tag; existing fallback retained.", exc_info=True)
         next_no = (max(existing) + 1) if existing else 1
         return f"PCA_v{next_no:03d}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
@@ -665,7 +666,7 @@ class CombinedAnalysisDialog(QDialog):
             if hasattr(self, 'pca_filter_tiny_quadrants') and self.pca_filter_tiny_quadrants.isChecked():
                 return float(self.pca_quadrant_min_area.value())
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._pca_quadrant_min_area_value; existing fallback retained.", exc_info=True)
         return 0.0
 
     def _apply_pca_quadrant_class_names(self, gpkg_path):
@@ -682,13 +683,13 @@ class CombinedAnalysisDialog(QDialog):
                 try:
                     cv = int(cv)
                 except Exception:
-                    continue
+                    logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._apply_pca_quadrant_class_names; existing fallback retained.", exc_info=True); continue
                 if cv in legend:
                     feat.SetField('class_name', legend[cv])
                     lyr.SetFeature(feat)
             ds = None
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._apply_pca_quadrant_class_names; existing fallback retained.", exc_info=True)
 
     def _write_pca_quadrant_area_summary_csv(self, gpkg_path, out_dir):
         """Write per-quadrant polygon counts and area totals after optional filtering."""
@@ -706,13 +707,13 @@ class CombinedAnalysisDialog(QDialog):
                     try:
                         cv = int(cv); area = float(area)
                     except Exception:
-                        continue
+                        logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._write_pca_quadrant_area_summary_csv; existing fallback retained.", exc_info=True); continue
                     if cv in totals:
                         totals[cv]['count'] += 1
                         totals[cv]['area'] += area
                 ds = None
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._write_pca_quadrant_area_summary_csv; existing fallback retained.", exc_info=True)
         with open(path, 'w', newline='', encoding='utf-8') as f:
             w = csv.writer(f)
             w.writerow(['class','class_name','polygon_count','total_area_km2','min_area_filter_km2','interpretation_note'])
@@ -767,7 +768,7 @@ class CombinedAnalysisDialog(QDialog):
                 if isinstance(lyr, QgsRasterLayer) and 'hri' in (lyr.name() + ' ' + lyr.source()).lower():
                     candidates.append(lyr.source())
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._find_latest_hri_path; existing fallback retained.", exc_info=True)
         folders = [self._combined_dir(), os.path.join(self.processing_folder, '07_Combined_Maps')]
         for folder in folders:
             if folder and os.path.isdir(folder):
@@ -1029,7 +1030,7 @@ class CombinedAnalysisDialog(QDialog):
         try:
             self._update_combination_input_labels()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._make_combinations_tab; existing fallback retained.", exc_info=True)
         return w
 
 
@@ -1352,11 +1353,11 @@ class CombinedAnalysisDialog(QDialog):
             try:
                 self._refresh_crossplot_lists()
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._refresh_layers; existing fallback retained.", exc_info=True)
         try:
             self._update_combination_input_labels()
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._refresh_layers; existing fallback retained.", exc_info=True)
 
     def _auto_select(self, combo, needles):
         if combo is None:
@@ -2058,7 +2059,7 @@ class CombinedAnalysisDialog(QDialog):
             xmin=float(self.s3_axis_min.text()); xmax=float(self.s3_axis_max.text())
             if np.isfinite(xmin) and np.isfinite(xmax) and xmax>xmin: return xmin,xmax
         except Exception:
-            pass
+            logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._manual_axis_range; existing fallback retained.", exc_info=True)
         return None
 
     def _plot_histogram(self):
@@ -2275,7 +2276,7 @@ class CombinedAnalysisDialog(QDialog):
             try:
                 self.extraction_summary.appendPlainText('Polygon smoothing failed; using unsmoothed output. ' + str(e))
             except Exception:
-                pass
+                logging.getLogger(__name__).debug("Optional operation failed in CombinedAnalysisDialog._smooth_polygon_output; existing fallback retained.", exc_info=True)
             return gpkg_path
 
     def _extract_polygons(self):
