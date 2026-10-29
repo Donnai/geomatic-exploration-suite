@@ -1,0 +1,274 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Geomatic Exploration Suite - User Guide</title><style>
+body{font-family:Arial,sans-serif;line-height:1.55;color:#243746;margin:30px;max-width:1060px}h1{color:#17634c;border-bottom:4px solid #b69643;padding-bottom:12px}h2{color:#17634c;margin-top:30px}h3{color:#1c526d}table{border-collapse:collapse;width:100%;margin:15px 0}th{background:#17634c;color:white}td,th{border:1px solid #d4dde0;padding:8px;text-align:left}pre{background:#f2f5f5;border:1px solid #d4dde0;padding:12px;white-space:pre-wrap}code{font-family:monospace;color:#30546a}a{color:#17634c}blockquote{border-left:4px solid #b69643;padding-left:12px}
+</style></head><body><h1 id="geomatic-exploration-suite-user-guide">Geomatic Exploration Suite — User Guide</h1>
+<p>Version 1.0.0 · Author and maintainer: <strong>Donald Annor Appiah</strong></p>
+<p>This plugin combines the supplied Radiometric Analysis Suite and Seismic CDP
+Interval Annotator into one installable package, shared menu and dock. The
+radiometric tools and seismic tools remain distinct workflows: neither changes
+the other dataset automatically.</p>
+<h2 id="1-install-and-open">1. Install and open</h2>
+<ol>
+<li>Install <code>geomatic_exploration_suite.zip</code> using <strong>Plugins &gt; Manage and Install Plugins &gt; Install from ZIP</strong>.</li>
+<li>Enable <strong>Geomatic Exploration Suite</strong>. Open its menu under <strong>Plugins</strong> or use the toolbar icons.</li>
+<li>Choose <strong>Radiometric analysis</strong>, <strong>Seismic CDP and SEG-Y tools</strong>, or <strong>User guide and methods</strong>. They open tabs in the same dock.</li>
+<li>Resize, move or float the dock using QGIS's normal dock controls. Scrollbars keep the existing forms usable in a narrow dock.</li>
+</ol>
+<p>The package declares QGIS 3.22 or later within QGIS 3; runtime testing is reported
+separately. QGIS 4 / Qt 6 compatibility is not claimed. Keep the original plugins
+disabled if you prefer one set of menus. The integrated radiometric provider has
+its own identifier, <code>geomatic_exploration_suite</code>, so it can be distinguished from
+the original provider.</p>
+<h3 id="dependencies">Dependencies</h3>
+<p>The QGIS Python environment must include NumPy and GDAL/OGR/OSR. Matplotlib
+enables the radiometric plots. <strong>SEG-Y conversion additionally needs <code>segyio</code></strong>;
+the rest of the suite can open without it. Install additional packages into the
+Python environment used by QGIS. For an OSGeo4W installation, use its shell:</p>
+<pre><code class="language-text">python -m pip install segyio
+</code></pre>
+<p>Installing into a separate system Python does not make a package available to
+QGIS. Restart QGIS after adding a dependency.</p>
+<h2 id="2-prepare-a-study">2. Prepare a study</h2>
+<p>Use a new processing folder for each study or processing variant. Keep original
+rasters and navigation files separately from generated results. Check the CRS,
+extent, pixel size, units and NoData values before processing. For work in the
+appropriate Ghana UTM area, WGS 84 / UTM zone 30N is <code>EPSG:32630</code>; select it only
+when it describes the actual coordinates.</p>
+<p>Radiometric inputs are the uranium (U), potassium (K) and thorium (Th) rasters.
+Their units, calibration and processing history must be compatible with the
+interpretation being made. An optional polygon can limit the study area.
+Seismic inputs are an existing CDP point layer or SEG-Y files containing usable
+trace-navigation headers.</p>
+<h2 id="3-radiometric-workflow">3. Radiometric workflow</h2>
+<p>The <strong>Radiometric analysis</strong> tab retains the original panel's six sections:
+Radiometric Analysis, Work Manager, Data Analysis and QC, Stage 1 – Ratio Maps,
+Stage 2 – Ratio Analysis, and Stage 3 – Combined. Start with its processing
+folder and inputs; use Work Manager to inspect and organize generated outputs.</p>
+<h3 id="31-input-qc">3.1 Input QC</h3>
+<ol>
+<li>Select the U, K and Th rasters and the processing folder.</li>
+<li>Review raster statistics, histograms, CRS, resolution and valid/NoData coverage.</li>
+<li>Confirm that channels align spatially. Inspect unexpected tails, spikes, zeros and negative values before treating them as geological anomalies.</li>
+<li>Choose the masking and conditioning settings to match the data. Save the settings and QC outputs with the run.</li>
+</ol>
+<h3 id="32-conditioning-and-alignment">3.2 Conditioning and alignment</h3>
+<p>The preprocessing algorithm uses the U raster as the reference grid and aligns
+K and Th to it. A mask retains that grid and writes NoData outside the polygon.
+Controls include an additional NoData value, exclusion of values at or below
+zero, optional percentile clipping, and mean or median focal filtering.
+Available windows range from 3 × 3 to 15 × 15 cells.</p>
+<p>Choose the settings explicitly; smoothing and clipping can alter both anomaly
+shape and local amplitudes. Compare the conditioned rasters with their inputs.
+The Processing algorithm writes alignment, conditioning and filtered products
+under <code>02_Preprocessed</code>.</p>
+<h3 id="33-generate-four-ratio-maps">3.3 Generate four ratio maps</h3>
+<p>Select the conditioned/filtered rasters or let the tool discover them from the
+processing folder. Generate:</p>
+<table>
+<thead>
+<tr>
+<th>Ratio</th>
+<th>Calculation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>U/Th</td>
+<td>U divided by Th</td>
+</tr>
+<tr>
+<td>U/K</td>
+<td>U divided by K</td>
+</tr>
+<tr>
+<td>K/U</td>
+<td>K divided by U</td>
+</tr>
+<tr>
+<td>K/Th</td>
+<td>K divided by Th</td>
+</tr>
+</tbody>
+</table>
+<p>Set the minimum denominator guard to exclude unstable division near zero.
+Chunked processing and the block-size control are available for large rasters.
+Inspect the ratio statistics and spatial patterns before continuing. QGIS display
+quantiles affect styling; they are not a second copy of the ratio measurements.
+The ratio rasters are written under <code>03_Ratio_Maps</code>.</p>
+<h3 id="34-review-thresholds-and-extract-anomalies">3.4 Review thresholds and extract anomalies</h3>
+<p>Open the Stage 2 review panel. Inspect each histogram and the threshold preview.
+U/Th, U/K and K/U use high-tail selection; K/Th uses low-tail selection. A High
+percentile of 85 means an upper-tail threshold at P85, while a Very Low threshold
+at P5 selects the lower end of the distribution.</p>
+<p>Choose and save the threshold values, then review any trending/continuity
+settings and extract the anomaly rasters and polygons. Use a minimum area only
+when its interpretation and units are appropriate for the study. Record the
+threshold method and selected values with the outputs rather than assuming a
+particular P90/P95 convention.</p>
+<h3 id="35-combined-indices">3.5 Combined indices</h3>
+<p>For weighted-mean combination, the supplied tools implement:</p>
+<pre><code class="language-text">RRAI-U  = w1*N(U/Th) + w2*N(U/K) + w3*[1 - N(K/Th)]
+HRAI-KU = w1*N(U/Th) + w2*N(K/U) + w3*[1 - N(K/Th)]
+HRI     = s1*z(ln(U/Th)) + s2*z(ln(U/K)) - s3*z(ln(Th/K))
+</code></pre>
+<p><code>N</code> is the selected normalization. <code>z</code> standardizes a log ratio using the valid
+cells' mean and population standard deviation. Log ratios require positive
+values. RRAI-U and HRAI-KU also support the supplied alternative combination
+modes, including geometric, minimum and maximum combinations.</p>
+<p><strong>The supplied GUI and Processing tool have different presets.</strong> These are
+preserved rather than silently changing the imported scientific settings:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Combined-map GUI preset</th>
+<th>Processing algorithm default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RRAI-U triplet</td>
+<td>0.4, 0.4, 0.2</td>
+<td>0.4, 0.4, 0.2</td>
+</tr>
+<tr>
+<td>HRAI-KU triplet</td>
+<td>0.25, 0.60, 0.15</td>
+<td>0.4, 0.4, 0.2</td>
+</tr>
+<tr>
+<td>HRI coefficients</td>
+<td>1, 1, 1; raw scalars</td>
+<td>0.4, 0.4, 0.2; normalized triplet</td>
+</tr>
+</tbody>
+</table>
+<p>For comparable runs, explicitly set the same normalization, coefficients,
+combination method, validity mask and thresholds. Save the parameter log. HRI is
+a signed standardized score, so its values need not be between zero and one.
+These are screening indices; a radiometric anomaly alone does not establish a
+hydrocarbon occurrence.</p>
+<h3 id="36-diagnostics-pca-and-validation">3.6 Diagnostics, PCA and validation</h3>
+<p>Use the supplied ratio crossplots, source/trap diagnostics and histograms to
+inspect how the channels contribute to an index. The combined panel also
+contains PCA, loading/variance outputs, PC-score maps, quadrant products and
+PC1–HRI comparison controls. Interpret the component loadings before assigning
+geological meaning to a quadrant.</p>
+<p>The synthetic validation tool creates a deterministic 50 × 50-cell dataset and
+expected outputs. Run the normal workflow using those rasters and compatible
+parameters, then run the processing-folder validator. Read its PASS/FAIL,
+missing-file and parameter-discovery results. A different preset or smoothing
+choice can legitimately change the comparison; a synthetic check does not
+validate the geological interpretation of field data.</p>
+<h2 id="4-seismic-cdp-interval-annotation">4. Seismic CDP interval annotation</h2>
+<ol>
+<li>Load a CDP <strong>point</strong> layer with a line-name field and numeric CDP field.</li>
+<li>Open <strong>Seismic / SEG-Y &gt; CDP interval annotation</strong> and select the layer and fields.</li>
+<li>Use a projected CRS in metres for kilometre spacing. Set the interval in km.</li>
+<li>Choose whether to include the first point and the line endpoint.</li>
+<li>Set the label template, output folder and output basename, then run.</li>
+</ol>
+<p>Template tokens are <code>{Line}</code>, <code>{CDP}</code> and <code>{Dist_km}</code>. The tool sorts points by
+CDP within each line, constructs a line through those points, and places
+annotations at chainage intervals. It labels each interpolated position using
+the nearest original CDP by chainage. An annotation coordinate can therefore
+lie between original trace coordinates; it is not a newly measured trace point.</p>
+<p>Check line grouping, CDP order and large navigation gaps before using the
+result. Crossed, repeated or incorrectly ordered navigation can produce an
+incorrect reconstructed line.</p>
+<table>
+<thead>
+<tr>
+<th>Output</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;base&gt;.shp</code> and sidecars</td>
+<td>Annotation points with Line, CDP, Dist_m, Lbl, X and Y</td>
+</tr>
+<tr>
+<td><code>&lt;base&gt;_Kingdom_CDP_Postings.csv</code></td>
+<td>Line, CDP, Dist_m, X, Y and Label columns</td>
+</tr>
+<tr>
+<td><code>&lt;base&gt;_Kingdom_CDP_Postings.txt</code></td>
+<td>Space-delimited postings with quoted label</td>
+</tr>
+</tbody>
+</table>
+<p>Keep Shapefile sidecar files together. Validate the field mapping, delimiter and
+CRS in the receiving Kingdom project before bulk import.</p>
+<h2 id="5-seg-y-navigation-conversion">5. SEG-Y navigation conversion</h2>
+<ol>
+<li>Install <code>segyio</code> in QGIS's Python environment if it is not already present.</li>
+<li>Open <strong>SEG-Y to points/lines</strong>, add the <code>.sgy</code>/<code>.segy</code> files and check the naming table.</li>
+<li>Edit each output line name or use <strong>Auto-clean names</strong>. Renaming the output does not rename the source file.</li>
+<li>Select the navigation pair: <code>CDP_X/CDP_Y</code>, <code>SourceX/SourceY</code> or <code>GroupX/GroupY</code>.</li>
+<li>Select the CDP identifier or trace-sequence header and the trace sampling step. A step of 1 exports every trace.</li>
+<li>Review coordinate-scalar handling and the option to skip missing/zero coordinates.</li>
+<li>Set the CRS that actually describes the header coordinates, the label template, output folder and basename. Run and inspect the log.</li>
+</ol>
+<p>Coordinate-scalar handling follows the implemented rule: positive scalar means
+multiply, negative scalar means divide by its absolute value, and zero means no
+scale change. The CRS field <strong>assigns</strong> the CRS to the coordinates; it does not
+transform them into another coordinate system. Do not label degree coordinates
+as EPSG:32630 merely to obtain a UTM layer.</p>
+<p>Use projected metre coordinates for the supplied length and interval outputs.
+Review a few scaled header positions against known navigation control before
+processing many lines. The trace-navigation line is a reconstruction from the
+selected headers and sampling step, not a recovered acquisition survey.</p>
+<p>SEG-Y label tokens are <code>{Line}</code>, <code>{CDP}</code>, <code>{TraceNo}</code> and <code>{FileName}</code>. The default
+label is <code>{Line}_CDP_{CDP}</code>. Exports include point and line Shapefiles,
+<code>&lt;base&gt;_Kingdom_CDP_Points.csv</code> and <code>&lt;base&gt;_Kingdom_CDP_Points.txt</code>. Point fields
+include Line, CDP, CDP_Name, TraceNo, FileName, OrigName, X, Y, Scalar and Lbl.</p>
+<h2 id="6-troubleshooting">6. Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZIP refused because of caches</td>
+<td>Rebuild from the plugin folder without <code>__pycache__</code>, <code>.pyc</code>, <code>.pyo</code> or nested ZIP files.</td>
+</tr>
+<tr>
+<td>Radiometric button cannot find an algorithm</td>
+<td>Confirm the integrated provider is enabled and restart QGIS after replacing a plugin version.</td>
+</tr>
+<tr>
+<td>Empty ratio or anomaly outputs</td>
+<td>Inspect valid-cell overlap, NoData, positivity, denominator guard and selected thresholds.</td>
+</tr>
+<tr>
+<td>GUI and Processing combined maps differ</td>
+<td>Compare the presets, normalization and coefficient handling in section 3.5.</td>
+</tr>
+<tr>
+<td><code>segyio</code> not available</td>
+<td>Install it in QGIS's own Python environment, then restart QGIS.</td>
+</tr>
+<tr>
+<td>SEG-Y points plot incorrectly</td>
+<td>Inspect the selected X/Y headers, coordinate scalar, CRS and skipped-zero settings.</td>
+</tr>
+<tr>
+<td>Interval distances are wrong</td>
+<td>Use valid, correctly ordered CDPs in a projected metre CRS; inspect line gaps.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-sources-attribution-and-license">7. Sources, attribution and license</h2>
+<p>Implementation details in this guide are grounded in the supplied radiometric
+and seismic source code. The combined integration does not establish external
+scientific validation of their methods. See <code>AUTHORS.md</code> for component credits.
+Geomatic Exploration Suite is distributed under GPL-3.0-or-later; see <code>LICENSE</code>.</p>
+<p>Official technical references:</p>
+<ul>
+<li>QGIS Python plugins: https://docs.qgis.org/latest/en/docs/pyqgis_developer_cookbook/plugins/plugins.html</li>
+<li>SEG-Y I/O library: https://github.com/equinor/segyio</li>
+<li>QGIS plugin publication: https://plugins.qgis.org/docs/publish</li>
+</ul></body></html>
