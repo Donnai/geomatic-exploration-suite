@@ -285,7 +285,6 @@ def _find_processing_folder_for_log_path(path):
         '07_Combined_Maps', '08_Combined_Threshold_Maps', '09_Combined_Anomaly_Extraction',
         'Validation_Test_Outputs'
     }
-    audit_dirs = {'00_Stats_Logs', 'Settings', 'Validation', 'Processing_Logs', 'Sessions', 'Statistics', 'Histogram'}
 
     cur = folder
     while cur and os.path.dirname(cur) != cur:
@@ -310,7 +309,7 @@ def _find_processing_folder_for_log_path(path):
 def _canonical_log_paths_for(path):
     """Route stats and parameter CSVs into canonical subfolders."""
     folder = os.path.dirname(path)
-    base_folder = os.path.basename(folder).lower()
+    os.path.basename(folder).lower()
     stem = os.path.splitext(os.path.basename(path))[0]
     for suffix in ('_statistics', '_stats', '_thresholds', '_settings'):
         if stem.lower().endswith(suffix):
@@ -430,78 +429,7 @@ def polygonize_class_raster(raster_path, output_gpkg, layer_name, keep_values, m
     dst = None; src = None
 
 
-def polygonize_binary_mask_raster(raster_path, output_gpkg, layer_name, min_area_km2=0.0, min_pixels=0):
-    """Fast polygon extraction from a binary class raster.
 
-    This method treats class value 1 as anomaly and class value 0/NoData as
-    background. If min_pixels > 0, GDAL SieveFilter is applied before
-    polygonising so tiny connected regions are removed cheaply in raster space.
-    GDAL Polygonize is then called with the anomaly band as its own mask so the
-    background is ignored rather than polygonised and deleted later.
-    """
-    if os.path.exists(output_gpkg):
-        try: os.remove(output_gpkg)
-        except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_binary_mask_raster; existing fallback retained.", exc_info=True)
-    src = gdal.Open(raster_path)
-    if src is None:
-        raise QgsProcessingException(f'Could not open binary mask raster: {raster_path}')
-    proj = src.GetProjection(); gt = src.GetGeoTransform(); xsize = src.RasterXSize; ysize = src.RasterYSize
-    src_band = src.GetRasterBand(1)
-
-    # Build an in-memory Byte mask: anomaly=1, background=0.
-    mem_drv = gdal.GetDriverByName('MEM')
-    work = mem_drv.Create('', xsize, ysize, 1, gdal.GDT_Byte)
-    work.SetGeoTransform(gt); work.SetProjection(proj)
-    arr = src_band.ReadAsArray()
-    mask_arr = ((arr == 1) | (arr == 2) | (arr == 3)).astype('uint8')
-    work.GetRasterBand(1).SetNoDataValue(0)
-    work.GetRasterBand(1).WriteArray(mask_arr)
-    work.GetRasterBand(1).FlushCache()
-
-    if min_pixels and int(min_pixels) > 0:
-        sieved = mem_drv.Create('', xsize, ysize, 1, gdal.GDT_Byte)
-        sieved.SetGeoTransform(gt); sieved.SetProjection(proj)
-        sieved.GetRasterBand(1).SetNoDataValue(0)
-        # Connectedness=8 is generally better for geological anomaly footprints.
-        gdal.SieveFilter(work.GetRasterBand(1), None, sieved.GetRasterBand(1), int(min_pixels), 8)
-        work = sieved
-
-    band = work.GetRasterBand(1)
-    drv = ogr.GetDriverByName('GPKG')
-    dst = drv.CreateDataSource(output_gpkg)
-    if dst is None:
-        raise QgsProcessingException(f'Could not create output: {output_gpkg}')
-    srs = osr.SpatialReference()
-    if proj: srs.ImportFromWkt(proj)
-    lyr = dst.CreateLayer(layer_name, srs=srs, geom_type=ogr.wkbPolygon)
-    lyr.CreateField(ogr.FieldDefn('class', ogr.OFTInteger))
-    # Mask band = binary band, so only anomaly cells are polygonised.
-    gdal.Polygonize(band, band, lyr, 0, [], callback=None)
-    lyr.CreateField(ogr.FieldDefn('class_name', ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn('area_km2', ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn('anomaly_id', ogr.OFTInteger))
-    delete=[]; nid=1; lyr.ResetReading()
-    for feat in lyr:
-        cv = feat.GetField('class'); geom = feat.GetGeometryRef()
-        if cv is None or int(cv) != 1 or geom is None:
-            delete.append(feat.GetFID()); continue
-        area = geom.GetArea() / 1000000.0
-        if min_area_km2 > 0 and area < min_area_km2:
-            delete.append(feat.GetFID()); continue
-        feat.SetField('class_name', 'Anomaly')
-        feat.SetField('area_km2', float(area))
-        feat.SetField('anomaly_id', nid)
-        lyr.SetFeature(feat); nid += 1
-    for fid in delete:
-        lyr.DeleteFeature(fid)
-    try: dst.ExecuteSQL(f'CREATE SPATIAL INDEX ON {layer_name} (geom)')
-    except Exception: logging.getLogger(__name__).debug("Optional operation failed in polygonize_binary_mask_raster; existing fallback retained.", exc_info=True)
-    dst = None; src = None; work = None
-
-def load_layer(path, name):
-    if not os.path.exists(path): return
-    lyr = QgsVectorLayer(path, name, 'ogr') if path.lower().endswith('.gpkg') else QgsRasterLayer(path, name)
-    if lyr.isValid(): QgsProject.instance().addMapLayer(lyr)
 
 # -------------------------------------------------------------------------
 # Output/path and raster styling helpers added for v2.5
@@ -590,15 +518,6 @@ def apply_blue_red_pseudocolor(layer, low_q=1.0, high_q=99.0):
             logging.getLogger(__name__).debug("Optional operation failed in apply_blue_red_pseudocolor; existing fallback retained.", exc_info=True)
         return False
 
-def load_raster_pseudocolor_quantile(path, name, low_q=1.0, high_q=99.0):
-    if not os.path.exists(path):
-        return None
-    lyr = QgsRasterLayer(path, name)
-    if lyr.isValid():
-        apply_blue_red_pseudocolor(lyr, low_q, high_q)
-        QgsProject.instance().addMapLayer(lyr)
-        return lyr
-    return None
 
 # -------------------------------------------------------------------------
 # QGIS grouped layer loading helpers added for dock workflow

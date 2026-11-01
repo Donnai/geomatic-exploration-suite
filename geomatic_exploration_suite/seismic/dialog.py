@@ -1,9 +1,9 @@
+from ..qgis_compat import GEOM_POINT, VT
 import os
 import csv
-import math
 import re
 
-from qgis.PyQt.QtCore import Qt, QVariant
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QPushButton,
     QFileDialog, QDoubleSpinBox, QTextEdit, QCheckBox, QMessageBox,
@@ -11,9 +11,8 @@ from qgis.PyQt.QtWidgets import (
     QSpinBox, QTableWidget, QTableWidgetItem, QHeaderView
 )
 from qgis.core import (
-    QgsProject, QgsVectorLayer, QgsWkbTypes, QgsFeature, QgsGeometry,
-    QgsPointXY, QgsFields, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext,
-    QgsCoordinateReferenceSystem
+    QgsProject, QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY,
+    QgsFields, QgsField, QgsVectorFileWriter, QgsCoordinateTransformContext, QgsCoordinateReferenceSystem
 )
 
 
@@ -134,7 +133,7 @@ class CDPIntervalDialog(QDialog):
         self.layer_combo.blockSignals(True)
         self.layer_combo.clear()
         for lyr in QgsProject.instance().mapLayers().values():
-            if isinstance(lyr, QgsVectorLayer) and lyr.geometryType() == QgsWkbTypes.PointGeometry:
+            if isinstance(lyr, QgsVectorLayer) and lyr.geometryType() == GEOM_POINT:
                 self.layer_combo.addItem(lyr.name(), lyr.id())
         self.layer_combo.blockSignals(False)
         self.refresh_fields()
@@ -229,12 +228,12 @@ class CDPIntervalDialog(QDialog):
             groups.setdefault(line, []).append((cdp, QgsPointXY(pt)))
 
         out_fields = QgsFields()
-        out_fields.append(QgsField('Line', QVariant.String, len=80))
-        out_fields.append(QgsField('CDP', QVariant.Int))
-        out_fields.append(QgsField('Dist_m', QVariant.Double, len=20, prec=2))
-        out_fields.append(QgsField('Lbl', QVariant.String, len=120))
-        out_fields.append(QgsField('X', QVariant.Double, len=20, prec=3))
-        out_fields.append(QgsField('Y', QVariant.Double, len=20, prec=3))
+        out_fields.append(QgsField('Line', VT.String, len=80))
+        out_fields.append(QgsField('CDP', VT.Int))
+        out_fields.append(QgsField('Dist_m', VT.Double, len=20, prec=2))
+        out_fields.append(QgsField('Lbl', VT.String, len=120))
+        out_fields.append(QgsField('X', VT.Double, len=20, prec=3))
+        out_fields.append(QgsField('Y', VT.Double, len=20, prec=3))
 
         mem = QgsVectorLayer(f'Point?crs={crs.authid()}', base, 'memory')
         pr = mem.dataProvider()
@@ -326,9 +325,9 @@ class CDPIntervalDialog(QDialog):
         nlayout.addWidget(help_lbl)
         self.line_name_table = QTableWidget(0, 3)
         self.line_name_table.setHorizontalHeaderLabels(['SEG-Y file', 'Output line name', 'Point label preview'])
-        self.line_name_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.line_name_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.line_name_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.line_name_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.line_name_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.line_name_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.line_name_table.setMinimumHeight(135)
         self.line_name_table.itemChanged.connect(self._line_name_item_changed)
         nlayout.addWidget(self.line_name_table)
@@ -440,10 +439,10 @@ class CDPIntervalDialog(QDialog):
         self.line_name_table.insertRow(row)
         file_item = QTableWidgetItem(os.path.basename(path))
         file_item.setToolTip(path)
-        file_item.setFlags(file_item.flags() & ~Qt.ItemIsEditable)
+        file_item.setFlags(file_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         name_item = QTableWidgetItem(self._guess_line_name(path))
         preview_item = QTableWidgetItem(f'{name_item.text()}_CDP_1123')
-        preview_item.setFlags(preview_item.flags() & ~Qt.ItemIsEditable)
+        preview_item.setFlags(preview_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.line_name_table.setItem(row, 0, file_item)
         self.line_name_table.setItem(row, 1, name_item)
         self.line_name_table.setItem(row, 2, preview_item)
@@ -539,25 +538,25 @@ class CDPIntervalDialog(QDialog):
         os.makedirs(out_folder, exist_ok=True)
 
         p_fields = QgsFields()
-        p_fields.append(QgsField('Line', QVariant.String, len=80))
-        p_fields.append(QgsField('CDP', QVariant.Int))
-        p_fields.append(QgsField('TraceNo', QVariant.Int))
-        p_fields.append(QgsField('CDP_Name', QVariant.String, len=120))
-        p_fields.append(QgsField('FileName', QVariant.String, len=120))
-        p_fields.append(QgsField('OrigName', QVariant.String, len=120))
-        p_fields.append(QgsField('X', QVariant.Double, len=20, prec=3))
-        p_fields.append(QgsField('Y', QVariant.Double, len=20, prec=3))
-        p_fields.append(QgsField('Scalar', QVariant.Int))
-        p_fields.append(QgsField('Lbl', QVariant.String, len=120))
+        p_fields.append(QgsField('Line', VT.String, len=80))
+        p_fields.append(QgsField('CDP', VT.Int))
+        p_fields.append(QgsField('TraceNo', VT.Int))
+        p_fields.append(QgsField('CDP_Name', VT.String, len=120))
+        p_fields.append(QgsField('FileName', VT.String, len=120))
+        p_fields.append(QgsField('OrigName', VT.String, len=120))
+        p_fields.append(QgsField('X', VT.Double, len=20, prec=3))
+        p_fields.append(QgsField('Y', VT.Double, len=20, prec=3))
+        p_fields.append(QgsField('Scalar', VT.Int))
+        p_fields.append(QgsField('Lbl', VT.String, len=120))
 
         l_fields = QgsFields()
-        l_fields.append(QgsField('Line', QVariant.String, len=80))
-        l_fields.append(QgsField('FileName', QVariant.String, len=120))
-        l_fields.append(QgsField('OrigName', QVariant.String, len=120))
-        l_fields.append(QgsField('FirstCDP', QVariant.Int))
-        l_fields.append(QgsField('LastCDP', QVariant.Int))
-        l_fields.append(QgsField('N_Traces', QVariant.Int))
-        l_fields.append(QgsField('Length_m', QVariant.Double, len=20, prec=2))
+        l_fields.append(QgsField('Line', VT.String, len=80))
+        l_fields.append(QgsField('FileName', VT.String, len=120))
+        l_fields.append(QgsField('OrigName', VT.String, len=120))
+        l_fields.append(QgsField('FirstCDP', VT.Int))
+        l_fields.append(QgsField('LastCDP', VT.Int))
+        l_fields.append(QgsField('N_Traces', VT.Int))
+        l_fields.append(QgsField('Length_m', VT.Double, len=20, prec=2))
 
         points_layer = QgsVectorLayer(f'Point?crs={crs.authid()}', base + '_CDP_Points', 'memory')
         lines_layer = QgsVectorLayer(f'LineString?crs={crs.authid()}', base + '_Lines', 'memory')
@@ -686,7 +685,7 @@ class CDPIntervalDialog(QDialog):
         options.driverName = 'ESRI Shapefile'
         options.fileEncoding = 'UTF-8'
         err, msg, _, _ = QgsVectorFileWriter.writeAsVectorFormatV3(layer, path, QgsCoordinateTransformContext(), options)
-        if err != QgsVectorFileWriter.NoError:
+        if err != QgsVectorFileWriter.WriterError.NoError:
             raise RuntimeError(f'Could not write {path}: {msg}')
 
     def _write_point_outputs(self, mem, out_folder, base, add_to_map, logger):

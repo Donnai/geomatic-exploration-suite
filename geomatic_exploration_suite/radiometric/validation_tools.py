@@ -14,7 +14,7 @@ import json
 import re
 from datetime import datetime
 import numpy as np
-from osgeo import gdal, osr
+from osgeo import osr
 
 from .core.raster_io import write_raster, read_raster, safe_divide
 from .core.raster_stats import normalise
@@ -286,7 +286,7 @@ def _load_parameter_context(processing_folder, fallback_rrai, fallback_hrai, fal
     """
     log_dirs = ensure_stats_log_structure(processing_folder)
     settings_dir = log_dirs['settings']
-    sessions_dir = log_dirs['sessions']
+    log_dirs['sessions']
     ctx = {
         'ratio_params': {},
         'ratio_param_source': '',

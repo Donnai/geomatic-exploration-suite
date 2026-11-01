@@ -5,7 +5,7 @@ from qgis.PyQt.QtCore import Qt, QUrl
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import (
     QAction, QDockWidget, QTabWidget, QScrollArea, QWidget,
-    QVBoxLayout, QLabel, QTextBrowser, QDialog,
+    QVBoxLayout, QLabel, QTextBrowser,
 )
 from .provider import ExplorationProvider
 
@@ -60,7 +60,7 @@ class GeomaticExplorationSuite:
 
             self.dock = QDockWidget("Geomatic Exploration Suite", self.iface.mainWindow())
             self.dock.setObjectName("GeomaticExplorationSuiteDock")
-            self.dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+            self.dock.setAllowedAreas(Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea)
             container = QWidget()
             layout = QVBoxLayout(container)
             layout.setContentsMargins(4, 4, 4, 4)
@@ -77,7 +77,7 @@ class GeomaticExplorationSuite:
                     return True
 
             self.seismic = SeismicPanel(self.iface)
-            self.seismic.setWindowFlags(Qt.Widget)
+            self.seismic.setWindowFlags(Qt.WindowType.Widget)
             self.seismic.setMinimumSize(0, 0)
             self.tabs.addTab(self._scroll(self.radiometric), "Radiometric analysis")
             self.tabs.addTab(self._scroll(self.seismic), "Seismic / SEG-Y")
@@ -88,7 +88,7 @@ class GeomaticExplorationSuite:
             layout.addWidget(self.tabs)
             self.dock.setWidget(container)
             self.dock.setMinimumWidth(560)
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
         if tab == 1:
             self.seismic.refresh_layers()
             self.seismic.show()

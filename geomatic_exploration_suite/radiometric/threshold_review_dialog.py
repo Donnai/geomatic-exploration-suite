@@ -7,7 +7,8 @@ preview spatial threshold masks, tune continuity/trending, then extract final
 polygons.
 """
 import logging
-import os, csv, math
+import os
+import math
 import numpy as np
 import processing
 from osgeo import gdal
@@ -24,12 +25,15 @@ from qgis.core import QgsProject, QgsRasterLayer
 
 from .algs.utils import (
     read_raster, write_raster, ensure_dir, make_available_path,
-    load_raster_pseudocolor_quantile, load_layer, polygonize_class_raster, polygonize_binary_mask_raster,
-    write_stats_csv, array_stats, append_session_log
+    load_layer, polygonize_class_raster, polygonize_binary_mask_raster, write_stats_csv,
+    array_stats, append_session_log
 )
 
 try:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    try:
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+    except ImportError:
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
     HAS_MPL = True
 except Exception:
@@ -144,9 +148,9 @@ class RangeSlider(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         r = self._track_rect()
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(QColor(210, 210, 210)))
         painter.drawRoundedRect(r, 3, 3)
         x1 = self._x_for_value(self._low)
@@ -319,7 +323,7 @@ class ThresholdReviewDialog(QDialog):
                 fig = Figure(figsize=(4.6, 3.4), tight_layout=True)
                 canv = FigureCanvas(fig)
                 canv.setMinimumHeight(260)
-                canv.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                canv.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
                 self._hist_figs[key] = fig; self._hist_canvases[key] = canv
                 hroot.addWidget(canv, 2, col)
             rng = RangeSlider()
@@ -374,7 +378,7 @@ class ThresholdReviewDialog(QDialog):
         self.preview_level = QComboBox(); self.preview_level.addItems(['High / Low', 'Very High / Very Low'])
         self.preview_mask_mode = QComboBox(); self.preview_mask_mode.addItems(['Show removed mask', 'Show kept mask'])
         self.preview_mask_colour = QComboBox(); self.preview_mask_colour.addItems(['White', 'Black'])
-        self.preview_opacity = QSlider(Qt.Horizontal); self.preview_opacity.setRange(0, 100); self.preview_opacity.setValue(45)
+        self.preview_opacity = QSlider(Qt.Orientation.Horizontal); self.preview_opacity.setRange(0, 100); self.preview_opacity.setValue(45)
         self.preview_opacity_label = QLabel('45%')
         self.preview_opacity.valueChanged.connect(lambda v: self.preview_opacity_label.setText(f'{v}%'))
         preview_grid.addWidget(QLabel('Ratio:'), 0, 0); preview_grid.addWidget(self.preview_ratio, 0, 1)

@@ -14,15 +14,14 @@ from osgeo import gdal, ogr
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QPushButton,
     QComboBox, QDoubleSpinBox, QFileDialog, QCheckBox, QGroupBox,
-    QMessageBox, QPlainTextEdit, QTabWidget, QWidget, QSpinBox, QLineEdit, QSlider, QSizePolicy, QProgressBar, QApplication, QTableWidget, QTableWidgetItem, QHeaderView
+    QMessageBox, QPlainTextEdit, QTabWidget, QWidget, QSpinBox, QLineEdit, QProgressBar, QApplication, QTableWidget, QTableWidgetItem, QHeaderView
 )
-from qgis.PyQt.QtCore import Qt
 from qgis.core import QgsProject, QgsRasterLayer
 
 from .algs.utils import (
-    read_raster, write_raster, ensure_dir, make_available_path, normalise,
-    load_raster_pseudocolor_quantile, load_layer, polygonize_class_raster, polygonize_binary_mask_raster,
-    write_stats_csv, array_stats, append_session_log
+    read_raster, write_raster, ensure_dir, make_available_path, load_raster_pseudocolor_quantile,
+    load_layer, polygonize_class_raster, polygonize_binary_mask_raster, write_stats_csv,
+    array_stats, append_session_log
 )
 from .threshold_review_dialog import _square_dilate, _square_erode, _focal_fraction, _valid_values
 try:
@@ -58,7 +57,10 @@ except Exception:
                     self._set_layout_visible(item.layout(), visible)
 
 try:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    try:
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+    except ImportError:
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
     HAS_MPL = True
 except Exception:
@@ -273,7 +275,7 @@ class CombinedAnalysisDialog(QDialog):
         rlay.addWidget(run_btn)
         self.pca_table = QTableWidget(); self.pca_table.setMinimumHeight(130)
         self.pca_table.setColumnCount(1); self.pca_table.setHorizontalHeaderLabels(['Run PCA to fill loadings'])
-        self.pca_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.pca_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         rlay.addWidget(self.pca_table)
         if HAS_MPL:
             self.pca_fig = Figure(figsize=(8,4.5), tight_layout=True)
@@ -306,7 +308,7 @@ class CombinedAnalysisDialog(QDialog):
         egrid.addWidget(QLabel('Min area km²'),2,0); egrid.addWidget(self.pca_min_area,2,1)
         extract_btn = QPushButton('Extract PCA Anomaly Polygons'); extract_btn.clicked.connect(self._extract_pca_polygons)
         egrid.addWidget(extract_btn,3,0,1,4)
-        enote = QLabel('PCA anomalies are data-driven statistical outliers. Use them as a QC/exploration screening layer and compare with RRAI-U, HRAI-KU, ATP, geochemistry, structure and seismic evidence.')
+        enote = QLabel('PCA anomalies are data-driven statistical outliers. Use them as a QC/exploration screening layer and compare with RRAI-U, HRAI-KU, geochemistry, structure and seismic evidence.')
         enote.setWordWrap(True); egrid.addWidget(enote,4,0,1,4)
         ext.setContentLayout(egrid); root.addWidget(ext)
 
@@ -542,7 +544,7 @@ class CombinedAnalysisDialog(QDialog):
         self.pca_table.setItem(len(names), 0, QTableWidgetItem('Explained variance'))
         for k in range(ncomp):
             self.pca_table.setItem(len(names), k+1, QTableWidgetItem(f'{100*explained[k]:.2f}%'))
-        self.pca_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.pca_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
     def _plot_pca_results(self, score_vals, components, explained, names):
         if not HAS_MPL or not hasattr(self, 'pca_fig'):
@@ -850,7 +852,7 @@ class CombinedAnalysisDialog(QDialog):
             'How to interpret:\n'
             '• Loadings show which variables drive each component.\n'
             '• A high positive or negative PC score is a statistical contrast, not automatically a hydrocarbon anomaly.\n'
-            '• Use PCA score rasters as screening layers and compare them with RRAI-U, HRAI-KU, ATP, geochemistry, structural lineaments and seismic leads.\n\n'
+            '• Use PCA score rasters as screening layers and compare them with RRAI-U, HRAI-KU, geochemistry, structural lineaments and seismic leads.\n\n'
             'Important: Component meanings are not fixed. Always interpret PC1/PC2 from the loading table and biplot for the current dataset. The PCA quadrant raster is a diagnostic PC1/PC2 classification; its geology depends on the signs and magnitudes of the loadings.'
         )
 
@@ -2007,7 +2009,7 @@ class CombinedAnalysisDialog(QDialog):
             close_btn.clicked.connect(dlg.accept)
             layout.addWidget(close_btn)
             dlg.resize(930, 760)
-            dlg.exec_()
+            dlg.exec()
         except Exception as e:
             QMessageBox.critical(self, 'Scatterplot error', str(e))
 
@@ -2085,7 +2087,6 @@ class CombinedAnalysisDialog(QDialog):
         if show_raw: ax.hist(raw,bins=bins,alpha=0.40,label='Raw')
         if show_analysis: ax.hist(analysis,bins=bins,alpha=0.55,label='Analysis')
         h,v=self._threshold_values()
-        finite=np.isfinite(self._combined); total=float(np.count_nonzero(finite)) or 1.0
         if getattr(self,'chk_s3_removed',None) is not None and self.chk_s3_removed.isChecked():
             rem=analysis[analysis < h]
             if rem.size: ax.hist(rem,bins=bins,alpha=0.18,label='Removed')

@@ -47,7 +47,7 @@ input datasets or private test logs are included in this public repository.
 GPL-3.0-or-later. See [LICENSE](LICENSE) and the retained component credits in
 [AUTHORS.md](geomatic_exploration_suite/AUTHORS.md).
 
-## Version 1.0.2
+## Version 1.0.3
 
 Uses location-neutral guidance and requires an explicit header-coordinate CRS
 for SEG-Y conversion. No operational study data are bundled. Scientific formulas

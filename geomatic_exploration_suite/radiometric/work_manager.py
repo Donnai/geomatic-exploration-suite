@@ -57,7 +57,7 @@ class WorkManagerTab(QWidget):
         base_group = QGroupBox('Base Processing Folder')
         base_row = QHBoxLayout(base_group)
         self.base_label = QLabel('(not set)')
-        self.base_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.base_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         base_row.addWidget(QLabel('Base folder:'))
         base_row.addWidget(self.base_label, 1)
         set_base = QPushButton('Set Base Folder...')
@@ -120,7 +120,7 @@ class WorkManagerTab(QWidget):
         self.session_table = QTableWidget()
         self.session_table.setColumnCount(4)
         self.session_table.setHorizontalHeaderLabels(['Folder', 'File', 'Modified', 'Path'])
-        self.session_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.session_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(QLabel('Active Session Outputs'))
         layout.addWidget(self.session_table, 1)
 
@@ -269,8 +269,8 @@ class WorkManagerTab(QWidget):
         sess = self.session_combo.currentText()
         if not sess:
             return
-        ans = QMessageBox.question(self, 'Delete session', f'Delete session and all outputs?\n\n{sess}', QMessageBox.Yes | QMessageBox.No)
-        if ans == QMessageBox.Yes:
+        ans = QMessageBox.question(self, 'Delete session', f'Delete session and all outputs?\n\n{sess}', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if ans == QMessageBox.StandardButton.Yes:
             shutil.rmtree(self._session_folder(sess), ignore_errors=True)
             if self.state and self.state.processing_session == sess:
                 self.state.processing_session = ''

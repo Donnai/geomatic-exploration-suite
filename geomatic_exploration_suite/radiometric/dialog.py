@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tabbed dock UI for the Radiometric Analysis plugin."""
+from ..qgis_compat import GEOM_POLYGON
 import logging
 import os
 import csv
@@ -18,8 +19,7 @@ from qgis.PyQt.QtWidgets import (
     QSpinBox, QTextEdit, QTextBrowser, QDialog, QProgressBar, QApplication, QDockWidget, QToolButton, QStyle
 )
 from qgis.core import (
-    QgsProject, QgsRasterLayer, QgsVectorLayer, QgsWkbTypes, QgsMapLayer,
-    QgsProcessingFeedback
+    QgsProject, QgsRasterLayer, QgsVectorLayer, QgsProcessingFeedback
 )
 
 from .algs.registry import resolve_algorithm_id_by_step
@@ -94,7 +94,10 @@ except Exception:
     STAGE3_GUIDE_SECTIONS = [("Guide", STAGE3_GUIDE)]
 
 try:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    try:
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+    except ImportError:
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
 except Exception:
     FigureCanvas = None
@@ -115,7 +118,7 @@ class RadiometricAnalysisPanel(QWidget):
         self.setWindowTitle('Radiometric Analysis Suite')
         self.setObjectName('RadiometricAnalysisPanel')
         try:
-            self.setAttribute(Qt.WA_TranslucentBackground, True)
+            self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         except Exception:
             logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel.__init__; existing fallback retained.", exc_info=True)
 
@@ -137,7 +140,7 @@ class RadiometricAnalysisPanel(QWidget):
         root.addWidget(header_frame)
 
         self.tabs = QTabWidget()
-        self.tabs.setTabPosition(QTabWidget.North)
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         root.addWidget(self.tabs, 1)
 
         self.main_tab = self._make_main_tab()
@@ -167,7 +170,7 @@ class RadiometricAnalysisPanel(QWidget):
         except Exception:
             logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._icon; existing fallback retained.", exc_info=True)
         try:
-            return self.style().standardIcon(QStyle.SP_FileIcon)
+            return self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
         except Exception:
             return QIcon()
 
@@ -185,7 +188,7 @@ class RadiometricAnalysisPanel(QWidget):
     def _scroll_wrap(self, widget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setWidget(widget)
         return scroll
 
@@ -370,7 +373,7 @@ class RadiometricAnalysisPanel(QWidget):
         browser = QTextBrowser()
         browser.setOpenExternalLinks(False)
         browser.setReadOnly(True)
-        browser.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        browser.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         if isinstance(text, (list, tuple)) and text and isinstance(text[0], (list, tuple)):
             sections = []
@@ -412,7 +415,7 @@ class RadiometricAnalysisPanel(QWidget):
         close = QPushButton('Close')
         close.clicked.connect(dlg.accept)
         layout.addWidget(close)
-        dlg.exec_()
+        dlg.exec()
 
     def _guide_button(self, title, text):
         btn = QPushButton('User Guide and Theory')
@@ -438,7 +441,7 @@ class RadiometricAnalysisPanel(QWidget):
         for lyr in QgsProject.instance().mapLayers().values():
             if isinstance(lyr, QgsVectorLayer) and lyr.isValid():
                 try:
-                    if lyr.geometryType() == QgsWkbTypes.PolygonGeometry:
+                    if lyr.geometryType() == GEOM_POLYGON:
                         combo.addItem(lyr.name(), lyr.source())
                 except Exception:
                     logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._project_polygon_combo; existing fallback retained.", exc_info=True)
@@ -463,7 +466,7 @@ class RadiometricAnalysisPanel(QWidget):
             self.mask_combo.blockSignals(True)
             self.mask_combo.clear(); self.mask_combo.addItem('(No mask polygon)', '')
             for lyr in QgsProject.instance().mapLayers().values():
-                if isinstance(lyr, QgsVectorLayer) and lyr.isValid() and lyr.geometryType() == QgsWkbTypes.PolygonGeometry:
+                if isinstance(lyr, QgsVectorLayer) and lyr.isValid() and lyr.geometryType() == GEOM_POLYGON:
                     self.mask_combo.addItem(lyr.name(), lyr.source())
             ix = self.mask_combo.findData(cur)
             if ix >= 0: self.mask_combo.setCurrentIndex(ix)
@@ -737,13 +740,13 @@ class RadiometricAnalysisPanel(QWidget):
 
         self.theme_toggle_btn = QToolButton(self)
         self.theme_toggle_btn.setObjectName('ThemeButton')
-        self.theme_toggle_btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.theme_toggle_btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.theme_toggle_btn.setCheckable(True)
         self.theme_toggle_btn.setChecked(False)
         self.theme_toggle_btn.setText('Light')
         self.theme_toggle_btn.setToolTip('Toggle between light and dark radiometric themes')
         try:
-            self.theme_toggle_btn.setIcon(QApplication.style().standardIcon(QStyle.SP_DialogYesButton))
+            self.theme_toggle_btn.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_DialogYesButton))
         except Exception:
             logging.getLogger(__name__).debug("Optional operation failed in RadiometricAnalysisPanel._add_theme_controls; existing fallback retained.", exc_info=True)
         self.theme_toggle_btn.toggled.connect(self._toggle_theme)
@@ -778,7 +781,7 @@ class RadiometricAnalysisPanel(QWidget):
             btn.setText(text)
             btn.setToolTip(tooltip)
             btn.setAutoRaise(True)
-            btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
             try:
                 btn.setIcon(style.standardIcon(icon))
             except Exception:
@@ -789,25 +792,25 @@ class RadiometricAnalysisPanel(QWidget):
         self.float_window_btn = make_btn(
             'Float',
             'Detach the Radiometric Analysis Suite from the QGIS side panel.',
-            QStyle.SP_TitleBarNormalButton,
+            QStyle.StandardPixmap.SP_TitleBarNormalButton,
             self._float_plugin_window
         )
         self.maximise_window_btn = make_btn(
             'Maximise',
             'Float and maximise the Radiometric Analysis Suite window.',
-            QStyle.SP_TitleBarMaxButton,
+            QStyle.StandardPixmap.SP_TitleBarMaxButton,
             self._maximise_plugin_window
         )
         self.restore_window_btn = make_btn(
             'Restore',
             'Restore the Radiometric Analysis Suite to its previous size/docked state.',
-            QStyle.SP_TitleBarNormalButton,
+            QStyle.StandardPixmap.SP_TitleBarNormalButton,
             self._restore_plugin_window
         )
         self.minimise_window_btn = make_btn(
             'Hide',
             'Minimise the floating window, or hide it if it is docked.',
-            QStyle.SP_TitleBarMinButton,
+            QStyle.StandardPixmap.SP_TitleBarMinButton,
             self._minimise_plugin_window
         )
 
@@ -1457,7 +1460,7 @@ class RadiometricAnalysisPanel(QWidget):
         root.addLayout(h)
 
         analysis_tabs = QTabWidget()
-        analysis_tabs.setTabPosition(QTabWidget.North)
+        analysis_tabs.setTabPosition(QTabWidget.TabPosition.North)
         root.addWidget(analysis_tabs, 1)
 
         # ------------------------------------------------------------------
@@ -1589,8 +1592,8 @@ class RadiometricAnalysisPanel(QWidget):
         # ------------------------------------------------------------------
         crossplot_tab = QWidget(); crossplot_root = QVBoxLayout(crossplot_tab)
         self.crossplot_widget = CombinedAnalysisDialog(crossplot_tab, processing_folder=self._active_processing_folder(), crossplot_only=True)
-        self.crossplot_widget.setWindowFlags(Qt.Widget)
-        self.crossplot_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.crossplot_widget.setWindowFlags(Qt.WindowType.Widget)
+        self.crossplot_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         crossplot_root.addWidget(self.crossplot_widget, 1)
         analysis_tabs.addTab(crossplot_tab, 'Crossplots')
 
@@ -2061,7 +2064,7 @@ class RadiometricAnalysisPanel(QWidget):
 
     def run_input_data_qc(self):
         self._update_qc_data_inputs()
-        entries = self._qc_expected_entries()
+        self._qc_expected_entries()
         selected_entries, missing = self._selected_qc_entries()
         paths = {label: path for label, path in selected_entries}
         if not paths:
@@ -2384,8 +2387,8 @@ class RadiometricAnalysisPanel(QWidget):
         h.addWidget(self._guide_button('Stage 2 - User Guide and Theory', STAGE2_GUIDE_SECTIONS))
         root.addLayout(h)
         self.stage3_widget = ThresholdReviewDialog(w, processing_folder=self._active_processing_folder())
-        self.stage3_widget.setWindowFlags(Qt.Widget)
-        self.stage3_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.stage3_widget.setWindowFlags(Qt.WindowType.Widget)
+        self.stage3_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         root.addWidget(self.stage3_widget, 1)
         try:
             self._apply_icons_to_child_tabs(self.stage3_widget, {'Threshold': 'threshold', 'Anomaly': 'polygon', 'Extract': 'polygon', 'Review': 'qc', 'Table': 'table'})
@@ -2403,8 +2406,8 @@ class RadiometricAnalysisPanel(QWidget):
         h.addWidget(self._guide_button('Stage 3 - User Guide and Theory', STAGE3_GUIDE_SECTIONS))
         root.addLayout(h)
         self.stage4_widget = CombinedAnalysisDialog(w, processing_folder=self._active_processing_folder(), include_crossplot=False)
-        self.stage4_widget.setWindowFlags(Qt.Widget)
-        self.stage4_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.stage4_widget.setWindowFlags(Qt.WindowType.Widget)
+        self.stage4_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         root.addWidget(self.stage4_widget, 1)
         try:
             self._apply_icons_to_child_tabs(self.stage4_widget, {'Normal': 'normalise', 'Cross': 'crossplot', 'Combination': 'combine', 'Combined': 'combine', 'Threshold': 'threshold', 'Anomaly': 'polygon', 'Extract': 'polygon'})
@@ -2745,7 +2748,7 @@ class RadiometricAnalysisPanel(QWidget):
                 stats[name] = array_stats(arr, [1, 5, 10, 15, 25, 50, 75, 85, 90, 95, 99])
                 paths[name] = p
                 if self.load_ratios.isChecked():
-                    lyr = load_raster_pseudocolor_quantile(p, name, low_q=float(self.style_low.value()), high_q=float(self.style_high.value()))
+                    load_raster_pseudocolor_quantile(p, name, low_q=float(self.style_low.value()), high_q=float(self.style_high.value()))
                     # load_raster_pseudocolor_quantile handles grouped insertion after v3.6 utils patch
             settings = {'Input_U': u_path, 'Input_K': k_path, 'Input_Th': th_path, 'Display_Low_Q': self.style_low.value(), 'Display_High_Q': self.style_high.value(), 'Denominator_guard_mode': guard_mode, 'Minimum_denominator_guard': abs_min_den, 'Denominator_guard_percentile': den_pct if guard_is_percentile else '', 'Computed_U_guard': denominator_guards.get('K_U_ratio'), 'Computed_K_guard': denominator_guards.get('U_K_ratio'), 'Computed_Th_guard': denominator_guards.get('U_Th_ratio'), 'Ratio_Extreme_Clipping': bool(getattr(self, 'clip_ratio_extremes', None) and self.clip_ratio_extremes.isChecked()), 'Ratio_Clip_Low_Q': float(self.clip_ratio_low.value()) if hasattr(self, 'clip_ratio_low') else '', 'Ratio_Clip_High_Q': float(self.clip_ratio_high.value()) if hasattr(self, 'clip_ratio_high') else '', 'Chunked_processing': False}
             write_stats_csv(os.path.join(logs, 'ratio_map_statistics.csv'), stats, settings)

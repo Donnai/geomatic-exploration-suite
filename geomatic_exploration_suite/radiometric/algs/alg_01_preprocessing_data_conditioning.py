@@ -12,11 +12,11 @@ Updates:
 - Output filenames use input raster basename + suffix, e.g. MyU_MeanF_5x5.tif
 - Optional mask polygon keeps the reference raster extent and writes NoData outside the polygon
 """
+from ...qgis_compat import SRC_POLYGON
 import logging
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
-    QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingException,
     QgsProcessingParameterRasterLayer,
@@ -31,7 +31,6 @@ from qgis.core import (
 )
 from osgeo import gdal
 import os
-import math
 import numpy as np
 
 gdal.UseExceptions()
@@ -84,7 +83,7 @@ class PreProcessingDataConditioning(QgsProcessingAlgorithm):
         self.addParameter(QgsProcessingParameterRasterLayer(self.U, self.tr('Uranium raster / reference grid')))
         self.addParameter(QgsProcessingParameterRasterLayer(self.K, self.tr('Potassium raster')))
         self.addParameter(QgsProcessingParameterRasterLayer(self.TH, self.tr('Thorium raster')))
-        self.addParameter(QgsProcessingParameterVectorLayer(self.MASK, self.tr('Optional study area mask polygon'), [QgsProcessing.TypeVectorPolygon], optional=True))
+        self.addParameter(QgsProcessingParameterVectorLayer(self.MASK, self.tr('Optional study area mask polygon'), [SRC_POLYGON], optional=True))
         self.addParameter(QgsProcessingParameterFolderDestination(self.OUT, self.tr('Output folder')))
 
         self.addParameter(QgsProcessingParameterBoolean(self.USE_EXTRA_NODATA, self.tr('Treat an additional NoData/null value as null'), defaultValue=True))
